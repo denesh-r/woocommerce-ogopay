@@ -80,7 +80,7 @@ var prepareForCheckout = function () {
 	if (!orderId) {
 		var splitpath = window.location.pathname.split('/');
 		var validValues = splitpath.filter(Boolean);
-		orderId = validValues[validValues.length-1];
+		orderId = validValues[validValues.length - 1];
 	}
 
 	if (orderId) {
@@ -97,7 +97,7 @@ var prepareForCheckout = function () {
 
 				// when the close button on the dialog is clicked...
 				jQuery("#modalClose").on('click', function () {
-					
+
 					// hide the dialog
 					jQuery('#myModal').css('display', 'none');
 
@@ -179,9 +179,9 @@ var showOgopayDialog = function () {
 // triggered when add payment method button is clicked on the payment methods page
 jQuery(function ($) {
 	var add_payment_form = $('#add_payment_method');
-	add_payment_form.on('submit', function() {
-		
-		if ($('#wc-ogopay-payment-token-new').is(':checked')){
+	add_payment_form.on('submit', function () {
+
+		if ($('#wc-ogopay-payment-token-new').is(':checked')) {
 			showOgopayDialog();
 			return false;
 		}
@@ -190,9 +190,9 @@ jQuery(function ($) {
 
 jQuery(function ($) {
 	var add_payment_form = $('#order_review');
-	add_payment_form.on('submit', function() {
-		
-		if ($('#wc-ogopay-payment-token-new').is(':checked')){
+	add_payment_form.on('submit', function () {
+
+		if ($('#wc-ogopay-payment-token-new').is(':checked')) {
 			showOgopayDialog();
 			return false;
 		}
@@ -207,7 +207,7 @@ jQuery(function ($) {
 window.onhashchange = showOgopayDialog;
 
 // this is the parent function that gets called when we get redirected inside the dialog to the close_modal page
-function close_modal(url){
+function close_modal(url) {
 	jQuery("#modalClose").click();
 	window.location.replace(url);
 }

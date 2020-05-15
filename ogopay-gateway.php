@@ -13,38 +13,38 @@ if (!defined('ABSPATH')) {
 
 // this custom parses does various actions related to the gateway depending on the page being loaded
 add_action('parse_request', 'custom_parser');
-function custom_parser() {
+function custom_parser()
+{
+    global $wp;
+    $url = $wp->request;
 
-	global $wp;
-	$url = $wp->request;
-
-	// display the close modal page
+    // display the close modal page
     if ($url == 'ogopay_close_modal') {
-		$file_path = plugin_dir_path(__FILE__ ) . 'close_modal.html';
-		$response = file_get_contents($file_path);
-		echo $response;
- 	    exit();
-	}
+        $file_path = plugin_dir_path(__FILE__) . 'close_modal.html';
+        $response = file_get_contents($file_path);
+        echo $response;
+        exit();
+    }
 
-	// when redirected to the payment methods page after adding a card, 
-	// display the appropriate notice based on the result
-	if ($url == 'my-account/payment-methods') {
-		if (isset($_GET['result'])) {
-			if ($_GET['result'] == 'success') {
-				wc_add_notice( 'Payment method successfully added.');
-			} else {
-				wc_add_notice('There was a problem adding this card. Reason: ' . $_GET['result'], 'error');
-			}
-		}
-	}
-
-	// when being redirected to the checkout page after a failed add card, 
-	// display the error sent by the gateway
-	if (strpos($url, "checkout") === 0) { // if url starts with checkout
+    // when redirected to the payment methods page after adding a card,
+    // display the appropriate notice based on the result
+    if ($url == 'my-account/payment-methods') {
         if (isset($_GET['result'])) {
-			wc_add_notice('There was a problem with the payment. Reason: ' . $_GET['result'], 'error');
+            if ($_GET['result'] == 'success') {
+                wc_add_notice('Payment method successfully added.');
+            } else {
+                wc_add_notice('There was a problem adding this card. Reason: ' . $_GET['result'], 'error');
+            }
         }
-	}
+    }
+
+    // when being redirected to the checkout page after a failed add card,
+    // display the error sent by the gateway
+    if (strpos($url, "checkout") === 0) { // if url starts with checkout
+        if (isset($_GET['result'])) {
+            wc_add_notice('There was a problem with the payment. Reason: ' . $_GET['result'], 'error');
+        }
+    }
 }
 
 /*
@@ -63,12 +63,12 @@ function ogopay_add_gateway_class($gateways)
 add_action('plugins_loaded', 'OGOPay_init_gateway_class');
 function OGOPay_init_gateway_class()
 {
-	// Class that extends Token_CC to store the card mask
+    // Class that extends Token_CC to store the card mask
     class WC_Payment_Token_OGOToken extends WC_Payment_Token_CC
     {
         
-		/** @protected string Token Type String */
-		// not sure if this is the right way, but have to set as cc to make payment methods page work properly
+        /** @protected string Token Type String */
+        // not sure if this is the right way, but have to set as cc to make payment methods page work properly
         protected $type = 'cc';
 
         public function validate()
@@ -91,10 +91,9 @@ function OGOPay_init_gateway_class()
         }
     }
 
-	// main gateway class
+    // main gateway class
     class WC_OGOPay_Gateway extends WC_Payment_Gateway
     {
- 
         public function __construct()
         {
             $this->id = 'ogopay';
@@ -126,16 +125,16 @@ function OGOPay_init_gateway_class()
             // We need custom JavaScript
             add_action('wp_enqueue_scripts', array( $this, 'payment_scripts' ));
             
-			// when redirected back after a purchase transaction with a new card
-			add_action('woocommerce_api_wc_gateway_ogopay', array( $this, 'handle_gateway_response' ));
+            // when redirected back after a purchase transaction with a new card
+            add_action('woocommerce_api_wc_gateway_ogopay', array( $this, 'handle_gateway_response' ));
 
-			// when redirected back after adding a new card as a payment method from the payment methods page
-			add_action('woocommerce_api_wc_gateway_ogopay_add_card', array( $this, 'handle_gateway_response_add_card' ));
+            // when redirected back after adding a new card as a payment method from the payment methods page
+            add_action('woocommerce_api_wc_gateway_ogopay_add_card', array( $this, 'handle_gateway_response_add_card' ));
 
-			// an endpoint to return order details when an orderId is provided
-			add_action('woocommerce_api_wc_gateway_ogopay_get_order_details', array( $this, 'get_order_details' ));
-		}
-		
+            // an endpoint to return order details when an orderId is provided
+            add_action('woocommerce_api_wc_gateway_ogopay_get_order_details', array( $this, 'get_order_details' ));
+        }
+        
 
         /**
          * Plugin options, we deal with it in Step 3 too
@@ -230,29 +229,28 @@ function OGOPay_init_gateway_class()
             // }
           
             if (is_checkout()) {
-				// in checkout page, tell ogopay.js endpoint to get order details from
+                // in checkout page, tell ogopay.js endpoint to get order details from
                 $ogopay_params['mode'] = 'checkout';
                 $ogopay_params['url'] = WC()->api_request_url('WC_Gateway_OGOPAY_get_order_details');
-
-			} elseif (is_add_payment_method_page()) {
-			 
-				// in add payment method page, tell ogopay.js the params to send to the iframe
-				$ogopay_params = array(
-					'orderId' => 'add-card-' . time(),
-					'customerId' => strval(wp_get_current_user()->id),
-					'merchantId' => $this->merchant_id,
-					'amount' => '100',
-					'time' => strval(time()),
-					'returnUrl' => urlencode(WC()->api_request_url('WC_Gateway_OGOPAY_add_card'))
-				);
-				
-				$hash = $this->generateHash($ogopay_params);
-				$ogopay_params['hash'] = $hash;
-				$ogopay_params['mode'] = 'add-card';
+            } elseif (is_add_payment_method_page()) {
+             
+                // in add payment method page, tell ogopay.js the params to send to the iframe
+                $ogopay_params = array(
+                    'orderId' => 'add-card-' . time(),
+                    'customerId' => strval(wp_get_current_user()->id),
+                    'merchantId' => $this->merchant_id,
+                    'amount' => '100',
+                    'time' => strval(time()),
+                    'returnUrl' => urlencode(WC()->api_request_url('WC_Gateway_OGOPAY_add_card'))
+                );
+                
+                $hash = $this->generateHash($ogopay_params);
+                $ogopay_params['hash'] = $hash;
+                $ogopay_params['mode'] = 'add-card';
             }
 
-			// This is our custom JS in our plugin directory
-			wp_register_script('woocommerce_ogopay', plugins_url('ogopay.js', __FILE__));
+            // This is our custom JS in our plugin directory
+            wp_register_script('woocommerce_ogopay', plugins_url('ogopay.js', __FILE__));
             wp_localize_script('woocommerce_ogopay', 'ogopay_params', $ogopay_params);
 
             wp_enqueue_script('zoid', 'https://ogo-hosted-pages.s3.amazonaws.com/zoid.js');
@@ -270,18 +268,16 @@ function OGOPay_init_gateway_class()
          */
         public function process_payment($order_id)
         {
-
             if ($_POST['wc-ogopay-payment-token'] == 'new') {
-				// user chose to pay with a new card
-				// do a redirect to change the location to trigger ogopay.js to show the dialog to pay with a new card
+                // user chose to pay with a new card
+                // do a redirect to change the location to trigger ogopay.js to show the dialog to pay with a new card
                 return array(
                     'result' => 'success',
                     'redirect' => '#' . time() . '.' . $order_id
                 );
                 exit();
-                            
             } else {
-				// paying with an existing token
+                // paying with an existing token
                 // get the token and perform tokenized purchase transaction
                 $token_id = $_POST['wc-ogopay-payment-token'];
                 $token = WC_Payment_Tokens::get($token_id);
@@ -313,45 +309,40 @@ function OGOPay_init_gateway_class()
                     'timeout' => 600
                 );
 
-				$url = "https://test-ipg.ogo.exchange/purchase";
-				// $url = "http://localhost:3000/purchase";
+                $url = "https://test-ipg.ogo.exchange/purchase";
+                // $url = "http://localhost:3000/purchase";
                 $response = wp_remote_post($url, $args);
 
                 if (is_wp_error($response)) {
                     $error_message = $response->get_error_message();
                 } else {
-					//convert our response body to object
-					$response_body = json_decode($response['body'], true);
-					$response_result = $response_body['result'];
-					$transactionId = $response_result['transactionId'];
-					$transactionDetails = json_encode($response_result);
+                    //convert our response body to object
+                    $response_body = json_decode($response['body'], true);
+                    $response_result = $response_body['result'];
+                    $transactionId = $response_result['transactionId'];
+                    $transactionDetails = json_encode($response_result);
 
-					if ($response_body['success'] == true){
+                    if ($response_body['success'] == true) {
+                        $order->payment_complete($transactionId);
+                        $order->add_order_note($transactionDetails);
 
-						$order->payment_complete($transactionId);
-						$order->add_order_note($transactionDetails);
+                        return array(
+                            'result'   => 'success',
+                            'redirect' => $this->get_return_url($order)
+                        );
+                    } else {
+                        $order->update_status('failed');
+                        $order->add_order_note($transactionDetails);
 
-						return array(
-							'result'   => 'success',
-							'redirect' => $this->get_return_url( $order )
-						);
-
-					} else {
-
-						$order->update_status('failed');
-						$order->add_order_note($transactionDetails);
-
-						wc_add_notice( $response_body['message'], 'error' );
-		
-						return array(
-							'result'   => 'fail',
-							'redirect' => ''
-						);
-					}
+                        wc_add_notice($response_body['message'], 'error');
+        
+                        return array(
+                            'result'   => 'fail',
+                            'redirect' => ''
+                        );
+                    }
                 }
-
             }
-
         }
 
         /**
@@ -360,16 +351,16 @@ function OGOPay_init_gateway_class()
         */
         // public function add_payment_method()
         // {
-			// do a redirect to change the location to trigger ogopay.js to show the dialog to pay with a new card
-			// $time = time();
-			// return array(
-			// 	'result' => 'redirect',
-			// 	'redirect' => '#' . time()
-			// );
-			// exit();
+        // do a redirect to change the location to trigger ogopay.js to show the dialog to pay with a new card
+        // $time = time();
+        // return array(
+        // 	'result' => 'redirect',
+        // 	'redirect' => '#' . time()
+        // );
+        // exit();
         // }
 
-		// Endpoint that responds with order details from orderId passed via request
+        // Endpoint that responds with order details from orderId passed via request
         public function get_order_details()
         {
             $order_id = $_REQUEST['orderId'];
@@ -397,8 +388,8 @@ function OGOPay_init_gateway_class()
 
         /**
         * This hook is called when the user gets redirected back to wordpress
-		* from a purchase order transaction with a new card gone through 3DS from the payment gateway
-		* 
+        * from a purchase order transaction with a new card gone through 3DS from the payment gateway
+        *
         * This happens inside the modal
         */
         public function handle_gateway_response()
@@ -408,51 +399,48 @@ function OGOPay_init_gateway_class()
 
             // if (($_REQUEST['success'] == 'true') && ($order->get_total() == $_REQUEST['amount'])) {
             if ($_REQUEST['success'] == 'true') {
-				$order->payment_complete($_REQUEST['transactionId']);
-				$order->add_order_note($_REQUEST['transactionDetails']);
-				$this->saveCardToken();
-				$checkout_url = urlencode($order->get_checkout_order_received_url());
-
+                $order->payment_complete($_REQUEST['transactionId']);
+                $order->add_order_note($_REQUEST['transactionDetails']);
+                $this->saveCardToken();
+                $checkout_url = urlencode($order->get_checkout_order_received_url());
             } else {
-				$checkout_url = urlencode( add_query_arg('result', $_REQUEST['message'], $order->get_checkout_payment_url()));
-				// $checkout_url = urlencode( add_query_arg('result', $_REQUEST['message'], wc_get_checkout_url()));
+                $checkout_url = urlencode(add_query_arg('result', $_REQUEST['message'], $order->get_checkout_payment_url()));
+                // $checkout_url = urlencode( add_query_arg('result', $_REQUEST['message'], wc_get_checkout_url()));
                 $order->update_status('failed');
                 $order->add_order_note('Payment Transaction Failed');
-			}
-			
-			// redirect to our custom page that closes the modal and redirects the page to the given url
-			wp_safe_redirect(add_query_arg( array(
-				'mode' => 'checkout',
-				'url' => $checkout_url
-			), get_site_url() . '/ogopay_close_modal'));
+            }
+            
+            // redirect to our custom page that closes the modal and redirects the page to the given url
+            wp_safe_redirect(add_query_arg(array(
+                'mode' => 'checkout',
+                'url' => $checkout_url
+            ), get_site_url() . '/ogopay_close_modal'));
         }
 
         /**
         * This method is called when the user gets redirected back to wordpress
         * from an add new card transaction with the payment gateway
-		*
-		* This happens inside the modal
+        *
+        * This happens inside the modal
         */
         public function handle_gateway_response_add_card()
         {
             if ($_REQUEST['success'] == 'true') {
-				$this->saveCardToken();
-				// create payment method success url
-				$payment_method_url = urlencode( add_query_arg('result', 'success', wc_get_account_endpoint_url('payment-methods')));
-
+                $this->saveCardToken();
+                // create payment method success url
+                $payment_method_url = urlencode(add_query_arg('result', 'success', wc_get_account_endpoint_url('payment-methods')));
             } else {
-				// create payment method failed url
-				$payment_method_url = urlencode( add_query_arg('result', $_REQUEST['message'], wc_get_account_endpoint_url('payment-methods')));
-			}
-			
-			// redirect to our custom page that closes the modal and redirects the page to the given url
-			wp_safe_redirect(add_query_arg( array(
-				'mode' => 'add-card',
-				'url' => $payment_method_url
-			), get_site_url() . '/ogopay_close_modal'));
-
+                // create payment method failed url
+                $payment_method_url = urlencode(add_query_arg('result', $_REQUEST['message'], wc_get_account_endpoint_url('payment-methods')));
+            }
+            
+            // redirect to our custom page that closes the modal and redirects the page to the given url
+            wp_safe_redirect(add_query_arg(array(
+                'mode' => 'add-card',
+                'url' => $payment_method_url
+            ), get_site_url() . '/ogopay_close_modal'));
         }
-		
+        
         private function base64url_encode($data)
         {
             return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
@@ -497,7 +485,6 @@ function OGOPay_init_gateway_class()
             if ($cardType == "U") {
                 $cardType = "Union Pay";
             }
-
 
             $token = new WC_Payment_Token_OGOToken();
             $token->set_token($card_token);
