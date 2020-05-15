@@ -1,0 +1,15 @@
+<html>
+<head>
+</head>
+<body>
+	<script>
+		const urlParams = new URLSearchParams(window.location.search);
+		const mode = urlParams.get('mode');
+		const url = urlParams.get('url');
+
+		if (mode == 'add-card' || mode == 'checkout') {
+			window.parent.close_modal(url);
+		}
+	</script>
+</body>
+</html>
